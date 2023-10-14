@@ -1,8 +1,12 @@
 import 'dart:io';
 
 import 'package:firebase_l1/auth.dart';
+import 'package:firebase_l1/home_page.dart';
+import 'package:firebase_l1/register_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
+import 'loading.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -15,9 +19,12 @@ class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _auth = Auth();
+  bool _isLoading = false;
 
-  _loading() {
-    return Center(child: Platform.isAndroid ? const CircularProgressIndicator() : const CupertinoActivityIndicator());
+  @override
+  void initState() {
+    super.initState();
+    print(_auth.getUser());
   }
 
   @override
@@ -56,20 +63,37 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 20),
               SizedBox(
                height: 55,
-               child: _auth.isLoading ?
-                 _loading() :  ElevatedButton(
+               child: _isLoading ?
+                 loading() :  ElevatedButton(
                    onPressed: () async {
-                    final response = await _auth.register(
+                     setState(() {
+                       _isLoading = true;
+                     });
+                    final response = await _auth.login(
                          email: _emailController.text,
                          password: _passwordController.text);
+                    await Future.delayed(const Duration(seconds: 1));
+                     setState(() {
+                       _isLoading = false;
+                     });
+                     if(response == "Success") {
+                       _navigate();
+                     }
                     debugPrint(response);
                    },
                    child: const Text("Login")),
              ),
+              const SizedBox(height: 20),
+              TextButton(onPressed: () {
+                Navigator.of(context).push(MaterialPageRoute(builder: (context) => RegisterPage()));
+              }, child: Text("Register"))
             ],
           ),
         ),
       ),
     );
+  }
+  _navigate() {
+    Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (context) => HomePage()), (Route<dynamic> route) => false);
   }
 }
